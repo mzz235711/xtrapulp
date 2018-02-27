@@ -55,7 +55,6 @@
 #include <iostream>
 #include <thread>
 //#include "include/global.h"
-#include "glog/logging.h"
 #include "xtrapulp.h"
 #include "mzpulp.h"
 #include "dist_graph.h"

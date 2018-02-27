@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
-#include <gflags/gflags.h>
 //#include "grape/fragment/edge.h"
 #include "config.h"
 #include "xtrapulp.h"
