@@ -56,114 +56,6 @@ namespace pulp{
   extern int procid, nprocs;
   extern bool verbose, debug, verify;
   extern MPI_Comm pulp_comm;
-/*
-  grape::VertexID* load_graph_edges_binary(char *input_filename, graph_gen_data_t *ggi, 
-    bool offset_vids, grape::edge_t* &cut_values, uint64_t &total_vnum) 
-  {
-    if (debug) { printf("Task %d load_graph_edges_32() start\n", procid); }
-
-    double elt = 0.0;
-    if (verbose) {
-      MPI_Barrier(pulp_comm);
-      elt = omp_get_wtime();
-    }
-
-    FILE *infp = fopen(input_filename, "rb");
-    if(infp == NULL)
-      throw_err("load_graph_edges_32() unable to open input file", procid);
-
-    fseek(infp, 0L, SEEK_END);
-    uint64_t file_size = ftell(infp);
-    fseek(infp, 0L, SEEK_SET);
-    uint64_t nedges_global = file_size/(2*sizeof(grape::VertexID) + sizeof (grape::edge_t));
-    ggi->m = nedges_global;
-
-    uint64_t read_offset_start = procid*(2*sizeof(grape::VertexID) + sizeof (grape::edge_t))*(nedges_global/nprocs);
-    uint64_t read_offset_end = (procid+1)*(2*sizeof(grape::VertexID) + sizeof (grape::edge_t))*(nedges_global/nprocs);
-    if(debug)
-    printf("%d read_offset_start %llu read_offset_end %llu \n",procid , read_offset_start, read_offset_end);
-    if (procid == nprocs - 1)
-      read_offset_end = (2*sizeof(grape::VertexID) + sizeof (grape::edge_t))*nedges_global;
-
-    uint64_t nedges = (read_offset_end - read_offset_start)/(2*sizeof(grape::VertexID) + sizeof(grape::edge_t));
-    ggi->m_local_read = nedges;
-
-    if (debug) {
-      printf("Task %d, read_offset_start %ld, read_offset_end %ld, nedges_global %ld, nedges: %ld\n", procid, read_offset_start, read_offset_end, nedges_global, nedges);
-    }
-
-    cut_values = (grape::edge_t*)malloc((nedges)*sizeof(grape::edge_t));
-    grape::VertexID* gen_edges_read = (grape::VertexID*)malloc(2*nedges*sizeof(grape::VertexID));
-    uint64_t* gen_edges = (uint64_t*)malloc(2*nedges*sizeof(uint64_t));
-
-    if (gen_edges_read == NULL || gen_edges == NULL)
-      throw_err("load_graph_edges(), unable to allocate buffer", procid);
-
-    fseek(infp, read_offset_start, SEEK_SET);
-    for(uint64_t counter = 0; counter<nedges; ++counter){
-      fread(gen_edges_read + 2*counter, 1, 2*sizeof(grape::VertexID), infp);
-      fread(cut_values + counter, 1, sizeof(grape::edge_t), infp);
-    }
-    
-    fclose(infp);
-
-    for (uint64_t i = 0; i < nedges*2; ++i)
-      gen_edges[i] = (uint64_t)gen_edges_read[i];
-
-    ggi->gen_edges = gen_edges;
-    if(debug)
-      printf("nedges = %d\n",nedges);
-    char name[10];
-    sprintf(name,"%d_edge",procid);
-    FILE *fp = fopen(name,"w");
-    for(uint32_t h = 0;h < nedges; h++) {
-      fprintf(fp,"%u %u %lf\t\n",gen_edges_read[h*2], gen_edges_read[h*2+1],cut_values[h]);
-    }
-    fclose(fp);
-
-    if (verbose) {
-      elt = omp_get_wtime() - elt;
-      printf("Task %d read %lu edges, %9.6f (s)\n", procid, nedges, elt);
-    }
-    
-    uint64_t max_n = 0;
-    for (uint64_t i = 0; i < ggi->m_local_read*2; ++i)
-      if (gen_edges[i] > max_n)
-        max_n = gen_edges[i];
-
-      uint64_t n_global;
-      MPI_Allreduce(&max_n, &n_global, 1, MPI_UINT64_T, MPI_MAX, pulp_comm);
-      total_vnum = n_global+1; 
-      ggi->n = n_global+1;
-      ggi->n_offset = (uint64_t)procid * (ggi->n / (uint64_t)nprocs + 1);
-      ggi->n_local = ggi->n / (uint64_t)nprocs + 1;
-      if (procid == nprocs - 1 && !offset_vids && !offset_vids)
-        ggi->n_local = n_global - ggi->n_offset + 1; 
-
-
-      if (offset_vids)
-      {
-#pragma omp parallel for
-        for (uint64_t i = 0; i < ggi->m_local_read*2; ++i)
-        {
-          uint64_t task_id = ggi->gen_edges[i] / (uint64_t)nprocs;
-          uint64_t task = ggi->gen_edges[i] % (uint64_t)nprocs;
-          uint64_t task_offset = task * (ggi->n / (uint64_t)nprocs + 1);
-          uint64_t new_vid = task_offset + task_id;
-          new_vid = (new_vid >= ggi->n) ? (ggi->n - 1) : new_vid;
-          ggi->gen_edges[i] = new_vid;
-        }
-      }
-
-      if (verbose) {
-        printf("Task %d, n %lu, n_offset %lu, n_local %lu\n", 
-         procid, ggi->n, ggi->n_offset, ggi->n_local);
-      }
-
-      if (debug) { printf("Task %d load_graph_edges() success\n", procid); }
-      return gen_edges_read;
-    }
-*/
     VertexID* load_graph_edges_32(std::vector<VertexID> &stream, graph_gen_data_t *ggi, 
       bool offset_vids, uint64_t file_size, uint64_t *edge_num, uint64_t &total_vnum) 
     {
@@ -175,10 +67,7 @@ namespace pulp{
         elt = omp_get_wtime();
       }
 
-
       uint64_t nedges_global = file_size/(2);
-   //   if(debug)
-   //     printf("file_size %llu\n", file_size);
       ggi->m = nedges_global;
 
       *edge_num = nedges_global/nprocs;
@@ -195,19 +84,11 @@ namespace pulp{
       }
 
       VertexID* gen_edges_read = (VertexID*)malloc(2*(*edge_num)*sizeof(VertexID));
- //     cut_values = (grape::edge_t*)malloc((*edge_num)*sizeof(grape::edge_t));
       uint64_t* gen_edges = (uint64_t*)malloc(2*(*edge_num)*sizeof(uint64_t));
       if (gen_edges_read == NULL || gen_edges == NULL)
         throw_err("load_graph_edges(), unable to allocate buffer", procid);
 
-  //int grape_specific = read_offset_start;
-    //  for (uint64_t i = 0;i < *edge_num;i++) {
-    //    gen_edges_read[i*2] = stream[i*2];
-    //    gen_edges_read[i*2+1] = stream[i*2+1];
-     //   cut_values[i] = values[i];
-    //  }
       gen_edges_read = &stream[0];
- //     cut_values = &values[0];
 
       for (uint64_t i = 0; i < (*edge_num)*2; ++i)
         gen_edges[i] = (uint64_t)gen_edges_read[i];
@@ -220,13 +101,13 @@ namespace pulp{
       }
       
       uint64_t max_n = 0;
-      for (uint64_t i = 0; i < ggi->m_local_read*2; ++i)
+      for (uint64_t i = 0; i < ggi->m_local_read*2; ++i) {
         if (gen_edges[i] > max_n)
           max_n = gen_edges[i];
+      }
         uint64_t n_global;
         MPI_Allreduce(&max_n, &n_global, 1, MPI_UINT64_T, MPI_MAX, pulp_comm);
-        
-        total_vnum = n_global+1;
+        total_vnum = n_global+1; 
         ggi->n = n_global+1;
         ggi->n_offset = (uint64_t)procid * (ggi->n / (uint64_t)nprocs + 1);
         ggi->n_local = ggi->n / (uint64_t)nprocs + 1;

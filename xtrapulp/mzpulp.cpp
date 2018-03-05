@@ -54,7 +54,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <thread>
-//#include "include/global.h"
 #include "xtrapulp.h"
 #include "mzpulp.h"
 #include "dist_graph.h"
@@ -66,7 +65,6 @@
 
 
 namespace pulp{
-//const char* split = "\t";
 
 #ifdef VID_64BIT
 #define EFFORMAT "%I64u%I64u%n\n"
@@ -77,45 +75,10 @@ namespace pulp{
 
 
     MPI_Comm pulp_comm;
-/*
-  void parsetoxpulp(char *filename,char *outputfile ,uint64_t &filesize, std::vector<VertexID> &numstream, std::vector<grape::edata_t> & values){
-   FILE *fp = fopen(filename, "r");
-   
-   uint64_t i = 0;
-   size_t j = 0;
-   char s[100];
-   int temp;
-   VertexID u,v;
-   edata_t value;
-   int loc;
-   temp = fscanf(fp, EFFORMAT, &u, &v, &loc);
-   while(temp != EOF) {
-     if(i%nprocs == procid) {
-       numstream.push_back(u);
-       numstream.push_back(v);
-       value = Any(ed_type, line.c_str() + loc);
-       values.push_back(value);
-     }
-     i++;
-     if(i%nprocs == procid){
-       temp = fscanf(fp, EFFORMAT, &u, &v, &loc);
-     }
-     else{
-       if (!fgets(s, 100, fp)){
-         break;
-       }
-     }
-   }
 
-    filesize = i*2;
-    fclose(fp);
-  }
-*/
-
-  void mzpulp(MPI_Comm comm_, int workernum, int workerID,  int partnum,std::vector<VertexID> input_edges,  int32_t* &final_parts, uint64_t &total_vnum) 
+  void mzpulp(MPI_Comm comm_, int workernum, int workerID,  int partnum,std::vector<VertexID> input_edges,  int32_t* &final_parts, uint64_t &total_vnum, uint64_t file_size) 
   {
 
-    //LOG(INFO) << "enter mzpulp" << std::endl;
     srand(time(0));
     setbuf(stdout, 0);
 
@@ -123,36 +86,18 @@ namespace pulp{
     debug = false;
     verify = false;
 
-//    int color = 1;
-//    int pulp_rank, pulp_size;
-//    pulp_comm = comm;
-//    MPI_Comm_split(MPI_COMM_WORLD, color, workerID, &pulp_comm);
-
-//    MPI_Comm_rank(pulp_comm, &pulp_rank);
-//    MPI_Comm_size(pulp_comm, &pulp_size);
     
-//    MPI_Barrier(pulp_comm);
     time_t start_time, end_time;
-    uint64_t file_size = 0;
 
     char input_filename[1024]; input_filename[0] = '\0';
     char graphname[1024]; graphname[0] = '\0';
-//    char *graph_e=strdup(inputfile);
     char ouput_graph[]="output.path"; 
     char* graph_name = ouput_graph;
-//    vector<grape::edge_t> values;
-//    grape::edge_t* cut_values;
-//    vector<grape::VertexID> stream;
     nprocs = workernum;
     procid = workerID;
     pulp_comm = comm_;
-   // LOG(INFO) << "procid = " << procid << " nprocs = " << nprocs << std::endl;
     
     start_time = time(NULL);
-//    if(!FLAGS_binary_efile){
-//      parsetoxpulp(graph_e,graph_name, file_size,stream, values);
-//    }
-//    LOG(INFO) << procid << "\t" << "Finished Parse EFile" << std::endl;
 
     MPI_Barrier(pulp_comm);
     char  num_parts_str[10];
@@ -192,21 +137,10 @@ namespace pulp{
      mpi_data_t comm;
       init_comm_data(&comm);
       
-   //   if (procid == 0) LOG(INFO) << "Reading in graphfile " << input_filename;
       double elt = omp_get_wtime();
       strcat(graphname, input_filename);
-     // printf("%s\n",input_filename);
-//      if(!FLAGS_binary_efile){
-//       LOG(INFO) << procid << "\tBegin Loading EFile" << std::endl; 
        origin_edges = pulp::load_graph_edges_32(input_edges , &ggi, offset_vids,  file_size,  &edge_num, total_vnum);
-//     } else {
-//      origin_edges = pulp::load_graph_edges_binary(graph_e, &ggi, offset_vids, cut_values, total_vnum);
-//}
     end_time = time(NULL);
- //   LOG(INFO) << "loading time is " << end_time - start_time << std::endl;
-//    vector<grape::VertexID>().swap(stream);
-//    vector<grape::edge_t>().swap(values); 
-//    if (procid == 0) LOG(INFO) << "Reading Finished: " << omp_get_wtime() - elt <<  "(s)" << std::endl;
     if (nprocs > 1)
     {
       exchange_edges(&ggi, &comm);
@@ -220,29 +154,20 @@ namespace pulp{
     queue_data_t q;
     init_queue_data(&g, &q);
     get_ghost_degrees(&g, &comm, &q);
-
     pulp_data_t pulp;
     init_pulp_data(&g, &pulp, num_parts);
-
     double total_elt = 0.0;
     for (uint32_t i = 0; i < num_runs; ++i)
     {
       double elt = 0.0;
       if (parts_in[0] != '\0')
       {
-  //      if (procid == 0) LOG(INFO) << "Reading in parts file " << parts_in << std::endl;
         elt = omp_get_wtime();
         read_parts(parts_in, &g, &pulp, offset_vids);
-  //      if (procid == 0) LOG(INFO) << "Reading Finished: " << omp_get_wtime() - elt << "(s)" << std::endl;
       }
-
-  //    if (procid == 0) LOG(INFO) << "Starting Partitioning" << std::endl;
       elt = omp_get_wtime();
       xtrapulp(&g, &ppc, &comm, &pulp, &q);
       total_elt += omp_get_wtime() - elt;
-//      if (procid == 0) LOG(INFO) << "Partitioning Finished" << std::endl;
-//      if (procid == 0) LOG(INFO) << "XtraPuLP Time: " << omp_get_wtime() - elt << "(s)" << std::endl;
-
       if (output_quality)
       {
         part_eval(&g, &pulp);
@@ -262,21 +187,15 @@ namespace pulp{
         ss << "." << i;
         strcat(temp_out, ss.str().c_str());
       }
-  //    if (procid == 0) LOG(INFO) << "Shuffle global parts " << temp_out << std::endl;
       elt = omp_get_wtime();
       output_parts(temp_out, &g, pulp.local_parts, offset_vids, final_parts);
- //     if (procid == 0) LOG(INFO) << "Done:" << omp_get_wtime() - elt << " (s)" << omp_get_wtime() - elt << std::endl;
     }
-    if (output_time && procid == 0 && num_runs > 1) 
-    {
-//      LOG(INFO) << "XtraPuLP Avg. Time:" << (total_elt / (double)num_runs) << " (s)" << std::endl;
-    }
+    
     clear_graph(&g);
     clear_comm_data(&comm);
     clear_queue_data(&q);
     MPI_Barrier(pulp_comm);
     end_time  = time(NULL);
-//    LOG(INFO) << "xtrapulp time is " << end_time - start_time << std::endl;
     return ;
   }
 }
