@@ -87,7 +87,7 @@ namespace pulp{
     verify = false;
 
     
-    time_t start_time, end_time;
+  //  time_t start_time, end_time;
 
     char input_filename[1024]; input_filename[0] = '\0';
     char graphname[1024]; graphname[0] = '\0';
@@ -109,13 +109,13 @@ namespace pulp{
     double vert_balance = 1.1;
     double edge_balance = 1.1;
     uint64_t num_runs = 1;
-    bool output_time = true;
+  //  bool output_time = true;
     bool output_quality = false;
-    bool gen_rmat = false;
-    bool gen_rand = false;
-    bool gen_hd = false;
-    uint64_t gen_n = 0;
-    uint64_t gen_m_per_n = 16;
+  //  bool gen_rmat = false;
+  //  bool gen_rand = false;
+  //  bool gen_hd = false;
+  //  uint64_t gen_n = 0;
+  //  uint64_t gen_m_per_n = 16;
     bool offset_vids = false;
     int pulp_seed = rand();
     bool do_bfs_init = true;
@@ -123,10 +123,10 @@ namespace pulp{
     bool do_repart = false;
     bool do_edge_balance = false;
     bool do_maxcut_balance = false;
-    VertexID* origin_edges;
+  //  VertexID* origin_edges;
     uint64_t edge_num;
 
-    char c;
+  //  char c;
 
     graph_gen_data_t ggi;
     dist_graph_t g;
@@ -137,7 +137,7 @@ namespace pulp{
      mpi_data_t comm;
       init_comm_data(&comm);
       
-      double elt = omp_get_wtime();
+  //    double elt = omp_get_wtime();
       strcat(graphname, input_filename);
        origin_edges = pulp::load_graph_edges_32(input_edges , &ggi, offset_vids,  file_size,  &edge_num, total_vnum);
     end_time = time(NULL);

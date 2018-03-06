@@ -78,8 +78,8 @@ namespace pulp{
     g->vertex_weights = NULL;
     g->edge_weights = NULL;
     g->map = (struct fast_map*)malloc(sizeof(struct fast_map));
-    if(debug)
-      printf("g->m_local = %lld, g->n_local = %lld",g->m_local,g->n_local);
+  //  if(debug)
+  //    printf("g->m_local = %lld, g->n_local = %lld",g->m_local,g->n_local);
     uint64_t* out_edges = (uint64_t*)malloc(g->m_local*sizeof(uint64_t));
     uint64_t* out_degree_list = (uint64_t*)malloc((g->n_local+1)*sizeof(uint64_t));
     uint64_t* temp_counts = (uint64_t*)malloc(g->n_local*sizeof(uint64_t));
