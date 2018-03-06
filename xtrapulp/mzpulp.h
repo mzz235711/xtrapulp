@@ -31,6 +31,6 @@ extern bool verbose, debug, verify;
 //void parsetoxpulp(char *filename,char *outputfile ,uint64_t &filesize, std::vector<VertexID> &numstream, std::vector<grape::edata_t> & values);
 //void print_usage(char** argv);
 //void print_usage_full(char** argv);
-void mzpulp(MPI_Comm comm_, int workernum, int workerID,  int partnum, std::vector<VertexID> input_edges, int32_t* &final_parts, uint64_t &total_vnum);
+void mzpulp(MPI_Comm comm_, int workernum, int workerID,  int partnum, std::vector<VertexID> input_edges, int32_t* &final_parts, uint64_t &total_vnum, uint64_t file_size);
 }
 #endif
