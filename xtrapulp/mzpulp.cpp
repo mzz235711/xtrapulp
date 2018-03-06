@@ -97,7 +97,6 @@ namespace pulp{
     procid = workerID;
     pulp_comm = comm_;
     
-    start_time = time(NULL);
 
     MPI_Barrier(pulp_comm);
     char  num_parts_str[10];
@@ -139,8 +138,7 @@ namespace pulp{
       
   //    double elt = omp_get_wtime();
       strcat(graphname, input_filename);
-       origin_edges = pulp::load_graph_edges_32(input_edges , &ggi, offset_vids,  file_size,  &edge_num, total_vnum);
-    end_time = time(NULL);
+      pulp::load_graph_edges_32(input_edges , &ggi, offset_vids,  file_size,  &edge_num, total_vnum);
     if (nprocs > 1)
     {
       exchange_edges(&ggi, &comm);
@@ -195,7 +193,6 @@ namespace pulp{
     clear_comm_data(&comm);
     clear_queue_data(&q);
     MPI_Barrier(pulp_comm);
-    end_time  = time(NULL);
     return ;
   }
 }
