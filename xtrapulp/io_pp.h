@@ -51,7 +51,7 @@
 #include "xtrapulp.h"
 #include "dist_graph.h"
 #include "comms.h"
-#include "mzpulp.h"
+#include "grape_connector.h"
 namespace pulp{
   VertexID* load_graph_edges_32(std::vector<VertexID> &stream, graph_gen_data_t *ggi,  bool offset_vids, uint64_t file_size, uint64_t *edge_num, uint64_t &total_vnum);
 
